@@ -31,7 +31,7 @@ const executeQuery = (query, params = []) => {
     `;
     console.log('Query (1b) - Unused planes:', await executeQuery(query1B));
 
-    // (c) All types of planes involved in all flights
+    // (1c) All types of planes involved in all flights
     // const queryC = `
     //   SELECT t.type
     //   FROM type t
@@ -39,18 +39,18 @@ const executeQuery = (query, params = []) => {
     //   GROUP BY t.type
     //   HAVING COUNT(DISTINCT p.flight_nr) = (SELECT COUNT(*) FROM flight);
     // `;
-    // console.log('Query (c) - Types on all flights:', await executeQuery(queryC));
-    const queryC = `
+    // console.log('Query (1c) - Types on all flights:', await executeQuery(queryC));
+    const query1C = `
       SELECT t.type
       FROM type t
       JOIN plane p ON t.plane_nr = p.plane_nr
       GROUP BY t.type
       HAVING COUNT(DISTINCT p.flight_nr) = (SELECT COUNT(DISTINCT flight_nr) FROM flight);
     `;
-    console.log('Query (c) - Types on all flights:', await executeQuery(queryC));
+    console.log('Query (1c) - Types on all flights:', await executeQuery(query1C));
 
-    // (d) All connections where not all plane types are used
-    const queryD = `
+    // (1d) All connections where not all plane types are used
+    const query1D = `
       WITH connection_types AS (
         SELECT f.dept, f.dest, t.type
         FROM flight f
@@ -63,7 +63,7 @@ const executeQuery = (query, params = []) => {
       GROUP BY c.dept, c.dest
       HAVING COUNT(DISTINCT c.type) < (SELECT COUNT(*) FROM all_types);
     `;
-    console.log('Query (d) - Connections missing some plane types:', await executeQuery(queryD));
+    console.log('Query (1d) - Connections missing some plane types:', await executeQuery(query1D));
 
     // (e) All flight numbers used multiple times
     // const queryE = `
@@ -73,46 +73,47 @@ const executeQuery = (query, params = []) => {
     //   HAVING COUNT(DISTINCT CONCAT(f.dept, '-', f.dest)) > 1;
     // `;
     // console.log('Query (e) - Flights used multiple times:', await executeQuery(queryE));
-    const queryE = `
+    const query1E = `
       SELECT f.flight_nr
       FROM flight f
       GROUP BY f.flight_nr
       HAVING COUNT(*) > 1;
     `;
-    console.log('Query (e) - Flights used multiple times:', await executeQuery(queryE));
+    console.log('Query (1e) - Flights used multiple times:', await executeQuery(query1E));
 
     // (f) All pairs of different flight numbers used on the same connection
-    const queryF = `
+    const query1F = `
       SELECT f1.flight_nr, f2.flight_nr
       FROM flight f1
       JOIN flight f2 ON f1.dept = f2.dept AND f1.dest = f2.dest AND f1.flight_nr < f2.flight_nr;
     `;
-    console.log('Query (f) - Flight pairs on same connection:', await executeQuery(queryF));
+    console.log('Query (1f) - Flight pairs on same connection:', await executeQuery(query1F));
 
-    // (g) All planes with a type used at least once for every connection
-    const queryG = `
+    // (1g) All planes with a type used at least once for every connection
+    const query1G = `
     WITH all_connections AS (
-        SELECT DISTINCT dept, dest
-        FROM flight
-    ),
+        SELECT dept, dest FROM flight
+        ),
     plane_types_used AS (
-        SELECT t.type, f.dept, f.dest
+        SELECT DISTINCT t.type, f.dept, f.dest
         FROM type t
         JOIN plane p ON t.plane_nr = p.plane_nr
         JOIN flight f ON p.flight_nr = f.flight_nr
     ),
     valid_types AS (
         SELECT pt.type
-        FROM plane_types_used pt
+        FROM all_connections ac
+        LEFT JOIN plane_types_used pt ON ac.dept = pt.dept AND ac.dest = pt.dest
         GROUP BY pt.type
-        HAVING COUNT(DISTINCT CONCAT(pt.dept, '-', pt.dest)) = (SELECT COUNT(*) FROM all_connections)
+        HAVING COUNT(ac.dept) = (SELECT COUNT(*) FROM all_connections)
     )
     SELECT p.plane_nr
     FROM plane p
     JOIN type t ON p.plane_nr = t.plane_nr
     WHERE t.type IN (SELECT type FROM valid_types);
+
     `;
-    console.log('Query (g) - Planes used on all connections:', await executeQuery(queryG));
+    console.log('Query (1g) - Planes used on all connections:', await executeQuery(query1G));
 
     // Point 2 (a) - True or false: every relational algebra expression without negation is monotone
     console.log('Point 2 (a): True. Adding tuples to input relations cannot decrease output when negation is absent.');
