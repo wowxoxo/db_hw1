@@ -1,0 +1,16 @@
+{
+  "name": "hw1",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "setup": "node setup.js",
+    "start": "node queries.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "sqlite3": "^5.1.7"
+  }
+}
