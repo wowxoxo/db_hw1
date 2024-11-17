@@ -123,35 +123,35 @@ const executeQuery = (query, params = []) => {
 
     // Point 3 (a) - Nodes with no incoming edges
     const query3A = `
-      SELECT DISTINCT G1.A
-      FROM G G1
-      WHERE G1.A NOT IN (SELECT B FROM G);
+    SELECT DISTINCT G1.A
+    FROM G G1
+    WHERE G1.A NOT IN (SELECT B FROM G);
     `;
     console.log('Query (3a) - Nodes with no incoming edges:', await executeQuery(query3A));
 
     // Point 3 (b) - Pairs (x, y) such that they point to all other nodes
     const query3B = `
-      SELECT DISTINCT x.A, y.A
-      FROM G x, G y
-      WHERE NOT EXISTS (
-        SELECT n.A
-        FROM G n
-        WHERE n.A NOT IN (SELECT G1.B FROM G G1 WHERE G1.A = x.A OR G1.A = y.A)
-      );
-    `;
+    SELECT DISTINCT x.A, y.A
+    FROM G x, G y
+    WHERE NOT EXISTS (
+      SELECT n.A
+      FROM G n
+      WHERE n.A NOT IN (SELECT G1.B FROM G G1 WHERE G1.A = x.A OR G1.A = y.A)
+    );
+  `;
     console.log('Query (3b) - Node pairs pointing to all other nodes:', await executeQuery(query3B));
 
     // Point 3 (c) - Pairs (x, y) with distance ≤ 4
     const query3C = `
-      WITH RECURSIVE Path AS (
+    WITH RECURSIVE Path AS (
         SELECT A, B, 1 AS length FROM G
         UNION ALL
         SELECT p.A, g.B, p.length + 1
         FROM Path p
         JOIN G g ON p.B = g.A
         WHERE p.length < 4
-      )
-      SELECT DISTINCT A, B FROM Path WHERE length <= 4;
+    )
+    SELECT DISTINCT A, B FROM Path WHERE length <= 4;
     `;
     console.log('Query (3c) - Node pairs with distance ≤ 4:', await executeQuery(query3C));
 
